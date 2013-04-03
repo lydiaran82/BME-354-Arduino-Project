@@ -1,0 +1,16 @@
+//This code is used to examining the sensitivity of the light sensor
+
+int sensePin =0;
+
+void setup() 
+{
+  analogReference(DEFAULT);  //isn’t necessary
+
+	Serial.begin(9600); //sets speed of communication, allows to print information
+}
+
+void loop() 
+{
+	Serial.println(analogRead(sensePin));
+	delay(500); // adds delay of 0.5 seconds
+}
