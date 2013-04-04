@@ -1,0 +1,26 @@
+//Include the Servo Library (PROCESSING)
+// Create a Servo Object
+#include <Serco.h>
+Servo jeremysServo;
+
+//Define the Pind
+int servoPin = 9;
+int distPin = 0;
+
+void setup() 
+{
+  //”Attach” The Servo Object
+	// We don’t need to set it as an output manually
+	jeremysServo.attach(servoPin);
+}
+
+void loop()
+{
+int dist = analogRead(distPin);
+	int pos = map(dist, 0, 1023, 0, 180);
+	
+	jeremysServo.write(pos);
+	
+}
+
+
