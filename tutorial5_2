@@ -1,4 +1,4 @@
-//Include the Servo Library (PROCESSING)
+//Include the Servo Library 
 // Create a Servo Object
 #include <Servo.h>
 Servo jeremysServo;
