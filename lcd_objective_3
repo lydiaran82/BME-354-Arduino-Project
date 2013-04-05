@@ -1,0 +1,21 @@
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+
+int pin = 0;
+
+void setup() {}
+
+void loop() 
+{
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  int x = analogRead(pin);
+  int v = round(x*(5.0/1024));
+  lcd.print(x);
+  //lcd.setCursor(2, 0);
+  //lcd.print("volts");
+  delay(1000); 
+}
