@@ -1,0 +1,15 @@
+byte doggie[8] = {
+  B00010,
+  B00011,
+  B00011,
+  B01110,
+  B11110,
+  B01010,
+  B01010,
+};
+
+void setup() {
+  lcd.createChar(0, doggie);
+  lcd.begin(16, 2);
+  lcd.write(byte(0));
+}
