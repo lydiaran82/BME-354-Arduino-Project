@@ -1,3 +1,5 @@
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 byte doggie[8] = {
   B00010,
   B00011,
