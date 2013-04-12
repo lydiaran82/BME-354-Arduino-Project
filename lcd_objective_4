@@ -9,6 +9,12 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 // define some values used by the panel and buttons
 int lcd_key = 0;
 int adc_key_in = 0;
+int second = 0;
+int minute = 0;
+int lcd_key2 = 4;
+int lcd_key3 = 4;
+
+
 
 #define btnRIGHT 0
 #define btnUP 1
@@ -16,30 +22,35 @@ int adc_key_in = 0;
 #define btnLEFT 3
 #define btnSELECT 4
 #define btnNONE 5
-#define V1 0
-#define V2 98
-#define V3 255
-#define V4 410
-#define V5 639
-#define VNONE 500
+#define V1 50
+#define V2 148
+#define V3 305
+#define V4 460
+#define V5 689
+#define VNONE 700
 
 // read the buttons
 int read_LCD_buttons()
+
 {
 adc_key_in = analogRead(0); // read the value from the sensor
 // my buttons when read are centered at these values: 0, 144, 329, 504, 741
 // we add approx 50 to those values and check to see if we are close
-if (adc_key_in > VNONE) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
+//if (adc_key_in > VNONE) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
 if (adc_key_in <= V1) return btnRIGHT;
-if (adc_key_in < V2) return btnUP;
-if (adc_key_in < V3) return btnDOWN;
-if (adc_key_in < V4) return btnLEFT;
-if (adc_key_in < V5) return btnSELECT;
-return btnNONE; // when all others fail, return this...
+if (adc_key_in > V1 && adc_key_in <= V2) return btnUP;
+if (adc_key_in > V2 && adc_key_in <= V3) return btnDOWN;
+if (adc_key_in > V3 && adc_key_in <= V4) return btnLEFT;
+if (adc_key_in > V4 && adc_key_in <= V5) return btnSELECT;
+//return btnNONE; // when all others fail, return this...
 }
 void setup()
 {
-lcd.begin(16, 2); // start the library
+  lcd.begin(16,2);
+  lcd.setCursor(1,0);
+  lcd.print(":");
+  lcd.setCursor(1,1);
+  lcd.print(":");
 }
 void loop()
 {
@@ -49,33 +60,137 @@ switch (lcd_key) // depending on which button was pushed, we perform an action
 case btnRIGHT:
 {
 //Instructions for what to do on RIGHT button press
+lcd.setCursor(0,0);
 lcd.print("sup");
+delay(150);
 break;
 }
 case btnLEFT:
 {
 //Instructions for what to do on LEFT button press
+lcd.setCursor(8,0);
 lcd.print("hey");
+delay(150);
 break;
 }
 case btnUP:
 {
+second = second + 1;
+if (second >= 60)
+{
+  minute = minute + 1;
+  second = 0;
+}
+if (second<10)
+{
+  lcd.setCursor(0,0);
+  lcd.print(minute);
+  lcd.setCursor(2,0);
+  lcd.print("0");
+  lcd.setCursor(3,0);
+  lcd.print(second);
+}
+else
+{
+lcd.setCursor(0,0);
+lcd.print(minute);
+lcd.setCursor(2,0);
+lcd.print(second);
+}
+delay(150);
 //Instructions for what to do on UP button press
+
 break;
 }
 case btnDOWN:
 {
+second = second - 1;
+lcd.setCursor(2,0);
+lcd.print(second);
+delay(150);
 //Instructions for what to do on DOWN button press
 break;
 }
 case btnSELECT:
 {
-//Instructions for what to do on SELECT button press
+starter:{
+int time = (minute*60)+second;
+int x = 0;
+
+while (time>0) {
+if (second<10)
+{
+  lcd.setCursor(0,1);
+  lcd.print(minute);
+  lcd.setCursor(2,1);
+  lcd.print("0");
+  lcd.setCursor(3,1);
+  lcd.print(second);
+}
+else
+{
+lcd.setCursor(0,1);
+lcd.print(minute);
+lcd.setCursor(2,1);
+lcd.print(second);
+}
+second = second - 1;
+time = time - 1;
+lcd_key2=analogRead(0);
+if (lcd_key2 <= V1) 
+{
+goto stopper;
+}
+if (second<0 && minute > 0) 
+{
+minute = minute - 1;
+second = 59;
+}
+
+delay(1000);
+}
+}
+
+stopper: {
+if (second<10)
+{
+  lcd.setCursor(0,1);
+  lcd.print(minute);
+  lcd.setCursor(2,1);
+  lcd.print("0");
+  lcd.setCursor(3,1);
+  lcd.print(second);
+}
+else
+{
+lcd.setCursor(0,1);
+lcd.print(minute);
+lcd.setCursor(2,1);
+lcd.print(second);
+}
+lcd_key3 = analogRead(0);
+if(lcd_key3 <= V1) {
+  goto starter; }
+}
+
+for(int i=0; i <= 3;  i++)
+{
+lcd.clear();
+lcd.setCursor(0,1);
+lcd.print("0:00");
+delay(1000);
+lcd.clear();
+lcd.print(" ");
+delay(1000);
+}
+lcd.setCursor(0,0);
+lcd.print("DONE!");
 break;
 }
 case btnNONE:
 {
 //Instructions for what to do if no button is pressed.
+lcd.clear();
 break;
 }
 }
