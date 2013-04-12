@@ -1,0 +1,36 @@
+int set_temp = 0.1;
+int x = 1;
+int current_val = 0;
+float current_v = 0;
+float current_temp = 0;
+
+int ledPin = 13;
+
+void setup() 
+{
+Serial.begin(9600);
+pinMode(ledPin, OUTPUT);
+pinMode(x, INPUT);
+}
+
+void loop() 
+{
+  current_val = analogRead(x);
+  current_v = (current_val*(5.0/1024))*1000; // converts arbitrary units to voltage
+  current_temp = current_v/5; // converts voltage (mV) to temperature (5mV in 1 deg. C)
+  if (current_temp <= set_temp) 
+  {
+    //turn the heater on
+    Serial.println("Heater on yo!");
+    digitalWrite(ledPin, HIGH);
+    
+  }
+  
+  if (current_temp > set_temp)
+  {
+    // turn the heater off
+    Serial.println("Heater off yo!");
+    digitalWrite(ledPin, LOW);
+  }
+delay(150);
+}
