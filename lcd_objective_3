@@ -15,7 +15,7 @@ void loop()
   int x = analogRead(pin);
   int v = round(x*(5.0/1024));
   lcd.print(x);
-  //lcd.setCursor(2, 0);
-  //lcd.print("volts");
+  lcd.setCursor(2, 0);
+  lcd.print("volts");
   delay(1000); 
 }
