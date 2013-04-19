@@ -1,0 +1,431 @@
+//Sample using LiquidCrystal library
+#include <LiquidCrystal.h>
+/*******************************************************
+This program will test the LCD panel and the buttons
+Mark Bramwell, July 2010
+********************************************************/
+// select the pins used on the LCD panel
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+// define some values used by the panel and buttons
+int lcd_key = 0;
+int adc_key_in = 0;
+int temperature = 0;
+int x = 1;
+int current_val = 0;
+float current_v = 0;
+float current_temp = 0;
+int ledPin = 2;
+
+#define btnRIGHT 0
+#define btnUP 1
+#define btnDOWN 2
+#define btnLEFT 3
+#define btnSELECT 4
+#define btnNONE 5
+#define V1 50
+#define V2 148
+#define V3 305
+#define V4 460
+#define V5 689
+#define VNONE 700
+
+// read the buttons
+int read_LCD_buttons()
+
+{
+adc_key_in = analogRead(0); // read the value from the sensor
+//if (adc_key_in > VNONE) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
+if (adc_key_in <= V1) return btnRIGHT;
+if (adc_key_in > V1 && adc_key_in <= V2) return btnUP;
+if (adc_key_in > V2 && adc_key_in <= V3) return btnDOWN;
+if (adc_key_in > V3 && adc_key_in <= V4) return btnLEFT;
+if (adc_key_in > V4 && adc_key_in <= V5) return btnSELECT;
+//return btnNONE; // when all others fail, return this...
+}
+
+
+void TempPrint() // Function that prints the temperature onto the LCD screen along with degrees Celsius symbol
+{                // Based on Objective 3 and Objective 4
+lcd.setCursor(0,0);
+lcd.print(temperature);
+if (temperature < 100)
+{
+  lcd.setCursor(2,0);
+  lcd.print(char(223));
+  lcd.setCursor(3,0);
+  lcd.print("C");
+}
+else
+{
+lcd.setCursor(3,0);
+  lcd.print(char(223));
+  lcd.setCursor(4,0);
+  lcd.print("C");
+}
+}
+
+
+//All temperature thresholds are chosen arbitrarily but can be adjusted to whichever system is being used
+void CheckTemp() //Function that checks the temperature and compares it to the user-set temperature
+{                //Based on Objective 1 and Objective 2
+  current_val = analogRead(x);
+  current_v = (current_val*(5.0/1024))*1000; // converts arbitrary units to mV
+  current_temp = current_v/5; // converts voltage (mV) to temperature (5mV in 1 deg. C)
+  if (current_temp <= temperature) //If the temperature is too low, turns on the heater
+  {
+    //turn the heater on
+    //Serial.println("Heater on");
+    digitalWrite(ledPin, HIGH);
+    //Serial.println(current_temp);
+    lcd.setCursor(12,0);
+    lcd.print("heat");
+    lcd.setCursor(14,1);
+    lcd.print("on");
+    lcd.setCursor(13,1);
+    lcd.print(" ");
+    lcd.setCursor(0,0);
+    lcd.print(current_temp);
+    lcd.setCursor(6,0);
+    lcd.print(char(223));
+    lcd.setCursor(7,0);
+    lcd.print("C");
+    if (current_temp >= 700) // safety measure for when the temperature rises above 300
+                             // this shouldn't happen under normal circumstances
+    {
+      digitalWrite(ledPin, LOW);
+      lcd.setCursor(0,0);
+      lcd.print("Heater off");
+      lcd.setCursor(0,1);
+      lcd.print("Temp too high.");
+    }
+    
+  }
+  
+  if (current_temp > temperature)  //If the temperature is too high, turns the heater off
+  {
+    // turn the heater off
+    //Serial.println("Heater off yo!");
+    digitalWrite(ledPin, LOW);
+    //Serial.println(current_temp);
+    TempPrint();
+    lcd.setCursor(12,0);
+    lcd.print("heat");
+    lcd.setCursor(13,1);
+    lcd.print("off");
+    lcd.setCursor(0,0);
+    lcd.print(current_temp);
+    lcd.setCursor(6,0);
+    lcd.print(char(223));
+    lcd.setCursor(7,0);
+    lcd.print("C");
+  }
+delay(150);
+}
+
+void setup()
+{
+  //Serial.begin(9600);
+  pinMode(ledPin, OUTPUT);
+  pinMode(x, INPUT);
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  lcd.print("Set Temp?"); //Prompt user to set the temperature
+}
+
+void loop()
+{
+lcd_key = read_LCD_buttons(); // read the buttons
+
+switch (lcd_key) // depending on which button was pushed, we perform an action
+{
+case btnRIGHT:
+{
+//Instructions for what to do on RIGHT button press
+break;
+}
+case btnLEFT:
+{
+//Instructions for what to do on LEFT button press
+break;
+}
+case btnUP: //Increments the set temperature up
+{
+lcd.clear();
+temperature = temperature + 1;
+TempPrint();
+delay(150);
+//Instructions for what to do on UP button press
+break;
+}
+case btnDOWN: //Decrements the set temperature down
+{
+lcd.clear();
+temperature = temperature - 1;
+TempPrint();
+delay(150);
+
+//Instructions for what to do on DOWN button press
+break;
+}
+case btnSELECT: //Runs the temperature comparison
+{
+while (temperature >=0)
+{
+if (temperature <= 10) //Temperature threshold that the user can set
+{
+  lcd.setCursor(0,0);
+  lcd.print("Temp too low!");
+  delay(150);
+}
+else if (temperature >= 800)
+{
+  lcd.setCursor(0,0);
+  lcd.print("Temp too high!");
+  delay(150);
+}
+else
+{
+  CheckTemp();
+  delay(150);
+}
+lcd.setCursor(0,1); //Prints the set temperature
+lcd.print("Temp:");
+lcd.setCursor(6,1);
+lcd.print(temperature);
+if (temperature < 100) // Adds on the degrees Celsius 
+{
+  lcd.setCursor(8,1);
+  lcd.print(char(223));
+  lcd.setCursor(9,1);
+  lcd.print("C");
+}
+else
+{
+lcd.setCursor(9,1);
+  lcd.print(char(223));
+  lcd.setCursor(10,1);
+  lcd.print("C");
+}
+}
+//Instructions for what to do on SELECT button press
+}
+}
+
+}
+
+  //Sample using LiquidCrystal library
+#include <LiquidCrystal.h>
+/*******************************************************
+This program will test the LCD panel and the buttons
+Mark Bramwell, July 2010
+********************************************************/
+// select the pins used on the LCD panel
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+// define some values used by the panel and buttons
+int lcd_key = 0;
+int adc_key_in = 0;
+int temperature = 0;
+int x = 1;
+int current_val = 0;
+float current_v = 0;
+float current_temp = 0;
+int ledPin = 2;
+
+#define btnRIGHT 0
+#define btnUP 1
+#define btnDOWN 2
+#define btnLEFT 3
+#define btnSELECT 4
+#define btnNONE 5
+#define V1 50
+#define V2 148
+#define V3 305
+#define V4 460
+#define V5 689
+#define VNONE 700
+
+// read the buttons
+int read_LCD_buttons()
+
+{
+adc_key_in = analogRead(0); // read the value from the sensor
+//if (adc_key_in > VNONE) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
+if (adc_key_in <= V1) return btnRIGHT;
+if (adc_key_in > V1 && adc_key_in <= V2) return btnUP;
+if (adc_key_in > V2 && adc_key_in <= V3) return btnDOWN;
+if (adc_key_in > V3 && adc_key_in <= V4) return btnLEFT;
+if (adc_key_in > V4 && adc_key_in <= V5) return btnSELECT;
+//return btnNONE; // when all others fail, return this...
+}
+
+
+void TempPrint() // Function that prints the temperature onto the LCD screen along with degrees Celsius symbol
+{                // Based on Objective 3 and Objective 4
+lcd.setCursor(0,0);
+lcd.print(temperature);
+if (temperature < 100)
+{
+  lcd.setCursor(2,0);
+  lcd.print(char(223));
+  lcd.setCursor(3,0);
+  lcd.print("C");
+}
+else
+{
+lcd.setCursor(3,0);
+  lcd.print(char(223));
+  lcd.setCursor(4,0);
+  lcd.print("C");
+}
+}
+
+
+//All temperature thresholds are chosen arbitrarily but can be adjusted to whichever system is being used
+void CheckTemp() //Function that checks the temperature and compares it to the user-set temperature
+{                //Based on Objective 1 and Objective 2
+  current_val = analogRead(x);
+  current_v = (current_val*(5.0/1024))*1000; // converts arbitrary units to mV
+  current_temp = current_v/5; // converts voltage (mV) to temperature (5mV in 1 deg. C)
+  if (current_temp <= temperature) //If the temperature is too low, turns on the heater
+  {
+    //turn the heater on
+    //Serial.println("Heater on");
+    digitalWrite(ledPin, HIGH);
+    //Serial.println(current_temp);
+    lcd.setCursor(12,0);
+    lcd.print("heat");
+    lcd.setCursor(14,1);
+    lcd.print("on");
+    lcd.setCursor(13,1);
+    lcd.print(" ");
+    lcd.setCursor(0,0);
+    lcd.print(current_temp);
+    lcd.setCursor(6,0);
+    lcd.print(char(223));
+    lcd.setCursor(7,0);
+    lcd.print("C");
+    if (current_temp >= 700) // safety measure for when the temperature rises above 300
+                             // this shouldn't happen under normal circumstances
+    {
+      digitalWrite(ledPin, LOW);
+      lcd.setCursor(0,0);
+      lcd.print("Heater off");
+      lcd.setCursor(0,1);
+      lcd.print("Temp too high.");
+    }
+    
+  }
+  
+  if (current_temp > temperature)  //If the temperature is too high, turns the heater off
+  {
+    // turn the heater off
+    //Serial.println("Heater off yo!");
+    digitalWrite(ledPin, LOW);
+    //Serial.println(current_temp);
+    TempPrint();
+    lcd.setCursor(12,0);
+    lcd.print("heat");
+    lcd.setCursor(13,1);
+    lcd.print("off");
+    lcd.setCursor(0,0);
+    lcd.print(current_temp);
+    lcd.setCursor(6,0);
+    lcd.print(char(223));
+    lcd.setCursor(7,0);
+    lcd.print("C");
+  }
+delay(150);
+}
+
+void setup()
+{
+  //Serial.begin(9600);
+  pinMode(ledPin, OUTPUT);
+  pinMode(x, INPUT);
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  lcd.print("Set Temp?"); //Prompt user to set the temperature
+}
+
+void loop()
+{
+lcd_key = read_LCD_buttons(); // read the buttons
+
+switch (lcd_key) // depending on which button was pushed, we perform an action
+{
+case btnRIGHT:
+{
+//Instructions for what to do on RIGHT button press
+break;
+}
+case btnLEFT:
+{
+//Instructions for what to do on LEFT button press
+break;
+}
+case btnUP: //Increments the set temperature up
+{
+lcd.clear();
+temperature = temperature + 1;
+TempPrint();
+delay(150);
+//Instructions for what to do on UP button press
+break;
+}
+case btnDOWN: //Decrements the set temperature down
+{
+lcd.clear();
+temperature = temperature - 1;
+TempPrint();
+delay(150);
+
+//Instructions for what to do on DOWN button press
+break;
+}
+case btnSELECT: //Runs the temperature comparison
+{
+while (temperature >=0)
+{
+if (temperature <= 10) //Temperature threshold that the user can set
+{
+  lcd.setCursor(0,0);
+  lcd.print("Temp too low!");
+  delay(150);
+}
+else if (temperature >= 800)
+{
+  lcd.setCursor(0,0);
+  lcd.print("Temp too high!");
+  delay(150);
+}
+else
+{
+  CheckTemp();
+  delay(150);
+}
+lcd.setCursor(0,1); //Prints the set temperature
+lcd.print("Temp:");
+lcd.setCursor(6,1);
+lcd.print(temperature);
+if (temperature < 100) // Adds on the degrees Celsius 
+{
+  lcd.setCursor(8,1);
+  lcd.print(char(223));
+  lcd.setCursor(9,1);
+  lcd.print("C");
+}
+else
+{
+lcd.setCursor(9,1);
+  lcd.print(char(223));
+  lcd.setCursor(10,1);
+  lcd.print("C");
+}
+}
+//Instructions for what to do on SELECT button press
+}
+}
+
+}
+
+  
