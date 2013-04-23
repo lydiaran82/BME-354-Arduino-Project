@@ -1,0 +1,23 @@
+
+// read the buttons with debounce
+int read_LCD_buttons()
+{
+
+#define V1 50
+#define V2 148
+#define V3 305
+#define V4 460
+#define V5 689
+#define VNONE 700
+
+  int acd_key_in;
+  adc_key_in = analogRead(buttonPin); // buttonPin should be defined in main code (e.g. A0)
+  delay(5)
+    if (adc_key_in <= V1) return btnRIGHT;
+    else if (adc_key_in > V1 && adc_key_in <= V2) return btnUP;
+    else if (adc_key_in > V2 && adc_key_in <= V3) return btnDOWN;
+    else if (adc_key_in > V3 && adc_key_in <= V4) return btnLEFT;
+    else if (adc_key_in > V4 && adc_key_in <= V5) return btnSELECT;
+    else return btnNONE; // when all others fail, return this...
+
+}
