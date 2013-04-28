@@ -1,0 +1,126 @@
+#include <PID_v1.h>
+
+#include <LiquidCrystal.h>
+
+//Select the pins used on the LCD panel
+LiquidCrystal lcd(8 ,9 ,4 ,5 ,6 ,7);
+
+//define some values used by the panels and buttons
+int lcd_key = 0;
+int adc_key_in = 0;
+int setTemp = 0;
+int select = 0;
+int RampSoak=0;
+int Preheat=0;
+int PreheatTime=0;
+int RampPeak = 0;
+int ReflowPeak = 0;
+int ReflowTime = 0;
+int CoolingRate = 0;
+int c=0;
+int time = 0;
+int currentTemp=0;
+int x = 1;
+int Last = 0;
+int ledPin = 2;
+
+#define btnRIGHT 0
+#define btnUP 1
+#define btnDOWN 2
+#define btnLEFT 3
+#define btnSELECT 4
+#define btnNONE 5
+#define V1 50
+#define V2 148
+#define V3 305
+#define V4 460
+#define V5 689
+#define VNONE 700
+
+// read the buttons
+int read_LCD_buttons()
+
+{
+adc_key_in = analogRead(0); // read the value from the sensor
+//if (adc_key_in > VNONE) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
+if (adc_key_in <= V1) return btnRIGHT;
+if (adc_key_in > V1 && adc_key_in <= V2) return btnUP;
+if (adc_key_in > V2 && adc_key_in <= V3) return btnDOWN;
+if (adc_key_in > V3 && adc_key_in <= V4) return btnLEFT;
+if (adc_key_in > V4 && adc_key_in <= V5) return btnSELECT;
+//return btnNONE; // when all others fail, return this...
+}
+
+void TempPrint() // Function that prints the temperature onto the LCD screen along with degrees Celsius symbol
+{                // Based on Objective 3 and Objective 4
+lcd.setCursor(0,0);
+lcd.print(setTemp);
+//if (setTemp < 100)
+//{
+//  lcd.setCursor(2,0);
+//  lcd.print(char(223));
+//  lcd.setCursor(3,0);
+//  lcd.print("C");
+//}
+//else
+//{
+//lcd.setCursor(3,0);
+//  lcd.print(char(223));
+//  lcd.setCursor(4,0);
+//  lcd.print("C");
+//}
+}
+
+void setup()
+{
+lcd.begin(16, 2); // start the library
+time = millis();
+
+}
+void loop()
+{
+while (c==0){
+lcd.setCursor(0,0);
+lcd.print("Ramp to Soak?");
+SetValues();
+RampSoak=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Preheat Temp?");
+SetValues();
+Preheat=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Preheat Time?");
+SetValues();
+PreheatTime=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Ramp to Peak?");
+SetValues();
+RampPeak=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Reflow Peak?");
+SetValues();
+ReflowPeak=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Reflow Time?");
+SetValues();
+ReflowTime=setTemp;
+delay(150);
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Cooling Rate?");
+SetValues();
+CoolingRate=setTemp;
+digitalWrite(ledPin, HIGH); //Turn the heater on
+c=1;
+}
+}
