@@ -1,0 +1,54 @@
+
+int SetValues()
+{
+select = 0;
+setTemp=0;
+while (select==0) {
+  select = 0;
+lcd_key = read_LCD_buttons(); // read the buttons
+switch (lcd_key) // depending on which button was pushed, we perform an acti
+{
+case btnRIGHT:
+{
+//Instructions for what to do on RIGHT button press
+break;
+}
+case btnLEFT:
+{
+//Instructions for what to do on LEFT button press
+break;
+}
+case btnUP:
+{
+//Increase in value
+lcd.clear();
+setTemp=setTemp+1;
+TempPrint();
+delay(150);
+break;
+}
+case btnDOWN:
+{
+//Decrease in value
+lcd.clear();
+setTemp=setTemp-1;
+TempPrint();
+delay(150);
+break;
+}
+case btnSELECT:
+{
+//Selects the value
+select=1;
+delay(150);
+break;
+}
+case btnNONE:
+{
+//Instructions for what to do if no button is pressed.
+break;
+}
+}
+}
+return setTemp;
+}
