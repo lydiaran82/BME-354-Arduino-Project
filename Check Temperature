@@ -1,0 +1,87 @@
+void CheckTemp()
+{
+Last = currentTemp;
+currentTemp=analogRead(x);
+time = millis()-time;
+
+while (currentTemp<Preheat)
+{
+if ((currentTemp-Last)/time >= RampSoak)
+{
+  digitalWrite(ledPin, LOW);
+}
+else
+{
+  digitalWrite(ledPin, HIGH);
+}
+Last = currentTemp;
+currentTemp=analogRead(x);
+time = millis()-time;
+}
+
+time = millis()-time;
+for (time <= PreheatTime)
+{
+  currentTemp=analogRead(x);
+  if (currentTemp<Preheat)
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+  }
+  Ptime = millis()-time;
+}
+
+Last=currentTemp;
+currentTemp=analogRead(x);
+time = millis()-time;
+while (currentTemp<ReflowPeak)
+{
+  if((currentTemp-Last)/time>=RampPeak)
+  {
+    digitalWrite(ledPin, LOW);
+  }
+  else
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  Last = currentTemp;
+  currentTemp=analogRead(x);
+  time = millis()-time;
+}
+
+time = millis()-time;
+for (time <= ReflowTime)
+{
+  currentTemp=analogRead(x);
+  if (currentTemp<ReflowPeak)
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+  }
+  time = millis()-time;
+}
+
+Last=currentTemp;
+currentTemp=analogRead(x);
+time = millis()-time;
+while (currentTemp>0)
+{
+  if((Last-currentTemp)/time>=CoolingRate)
+  {
+    digitalWrite(ledPin, LOW);
+  }
+  else
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  Last = currentTemp;
+  currentTemp=analogRead(x);
+  time = millis()-time;
+}
+}
