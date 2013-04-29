@@ -1,0 +1,19 @@
+int debounce(int button)
+{
+  int buttonPin = A0;
+  int buttonLast = 0;
+  int buttonVal = 0;
+
+buttonVal = read_LCD_buttons();
+{ 
+    if (buttonVal == button && buttonLast != button) //if the SELECT button was pressed
+    {
+      buttonLast = button; //change the last button to SELECT (used for debouncing)
+    }
+    else if (buttonVal != button)
+    {
+      buttonLast = 0; //otherwise set to default
+    }
+      return buttonLast;  
+    }
+}
