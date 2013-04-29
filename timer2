@@ -1,0 +1,161 @@
+//Sample using LiquidCrystal library
+#include <LiquidCrystal.h>
+/*******************************************************
+ * This program will test the LCD panel and the buttons
+ * Mark Bramwell, July 2010
+ ********************************************************/
+// select the pins used on the LCD panel
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+// define some values used by the panel and buttons
+
+int buttonPin = A0;
+int buttonLast = 0;
+int buttonVal = 0;
+int lcd_key = 0;
+int adc_key_in = 0;
+int second = 0;
+int minute = 0;
+int lcd_key2 = 4;
+int c = 0;
+int lcd_keyRIGHT = 0;
+int lcd_keyLEFT = 0;
+int lcd_keyUP = 0;
+int lcd_keyDOWN = 0;
+int lcd_keySELECT= 0;
+int lcd_keyNONE = 0;
+
+#define btnRIGHT 0
+#define btnUP 1
+#define btnDOWN 2
+#define btnLEFT 3
+#define btnSELECT 4
+#define btnNONE 5
+
+void setup()
+{
+  lcd.begin(16,2);
+  lcd.setCursor(1,0);
+  lcd.print(":");
+  lcd.setCursor(1,1);
+  lcd.print(":");
+}
+void loop()
+{
+
+  lcd_keyRIGHT = debounce(btnRIGHT); // read the buttons
+  if (lcd_keyRIGHT != 0) {
+  }
+
+  lcd_keyLEFT = debounce(btnLEFT);
+  if (lcd_keyLEFT != 0) {
+  }
+
+  lcd_keyUP = debounce(btnUP);
+  if (lcd_keyUP != 0)
+  {
+    second = second + 1;
+    if (second >= 60) //to convert seconds to minute
+    {
+      minute = minute + 1;
+      second = 0;
+    }
+    if (second<10) //add a 0 in front of the digit for number less than 10
+    {
+      lcd.setCursor(0,0);
+      lcd.print(minute);
+      lcd.setCursor(2,0);
+      lcd.print("0");
+      lcd.setCursor(3,0);
+      lcd.print(second);
+    }
+    else
+    {
+      lcd.setCursor(0,0);
+      lcd.print(minute);
+      lcd.setCursor(2,0);
+      lcd.print(second);
+    }
+    //Instructions for what to do on UP button press
+  }
+
+  lcd_keyDOWN = debounce(btnDOWN);
+    if (lcd_keyDOWN != 0)
+  {
+    second = second - 1;
+    lcd.setCursor(2,0);
+    lcd.print(second);
+    delay(150);
+    //Instructions for what to do on DOWN button press
+  }
+
+  lcd_keySELECT = debounce(btnSELECT);
+    if (lcd_keySELECT != 0)
+  {
+    int time = (minute*60)+second; //converts the time to seconds
+    int x = 0;
+
+    while (time>0) //runs while time is greater than 0
+    {
+      lcd_key2=debounce(); //continuously reads for button presses
+      if (lcd_key2==btnRIGHT) //stop button
+      {
+        c=1;
+      }
+      if (lcd_key2==btnLEFT) //starts again
+      {
+        c=0;
+      }
+      if (c==1) {
+      }
+      else //counts down the time
+      {
+        if (second<10) // displays a zero before the digit if the number of seconds is less than 10
+        {
+          lcd.setCursor(0,1);
+          lcd.print(minute);
+          lcd.setCursor(2,1);
+          lcd.print("0");
+          lcd.setCursor(3,1);
+          lcd.print(second);
+        }
+        else // prints the minutes and seconds as they count down
+        {
+          lcd.setCursor(0,1);
+          lcd.print(minute);
+          lcd.setCursor(2,1);
+          lcd.print(second);
+        }
+        second = second - 1;
+        time = time - 1;
+        if (second<0 && minute > 0) // resets the number of seconds after a minute ends
+        {
+          minute = minute - 1;
+          second = 59;
+        }
+        delay(1000);
+      }
+    }
+
+    for(int i=0; i <= 3; i++) // flashes zeros when the stopwatch is done
+    {
+      lcd.clear();
+      lcd.setCursor(0,1);
+      lcd.print("0:00");
+      delay(1000);
+      lcd.clear();
+      lcd.print(" ");
+      delay(1000);
+    }
+    lcd.setCursor(0,0);
+    lcd.print("DONE!");
+    break;
+  }
+
+  lcd_keyNONE = debounce(btnNONE);
+    if (lcd_keyNONE != 0)
+  {
+    //Instructions for what to do if no button is pressed.
+    lcd.clear();
+    break;
+  }
+}
