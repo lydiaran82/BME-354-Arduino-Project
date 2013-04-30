@@ -1,0 +1,94 @@
+#include <PID_v1.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(8,9,4,5,6,7);
+
+int ledPin = 2;
+int current_val=0;
+int Preheat = 0;
+unsigned long RampTime = 0;
+float current_v=0;
+float current_temp=0;
+unsigned long time =0;
+unsigned long time1=0;
+int setTime = 0;
+int TotalTime = 0;
+int TimeLeft=0;
+int x = 5;
+
+int windowSize = 50;
+unsigned long windowStartTime;
+
+//Define variables
+double Setpoint, Input, Output;
+
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint, 2, 0.1, 5, DIRECT);
+
+
+void setup()
+{
+  pinMode(ledPin, OUTPUT);
+  pinMode(x, INPUT);
+  lcd.begin(16,2);
+  windowStartTime=millis();
+  myPID.SetOutputLimits(0,windowSize);
+  myPID.SetMode(AUTOMATIC);
+  Serial.begin(9600);
+  time = 0;
+}
+
+void loop()
+{
+  // Ramp to Soak
+  RampTime = 75000;
+  //lcd.setCursor(6,0);
+  //lcd.print("RampSoak");
+  time1 = millis();
+  Preheat = 150;
+  while (time < RampTime)
+  {
+    current_val=analogRead(x);
+    current_v = current_val*5.0*1000/1024;
+    current_temp = current_v/5;
+    Input = current_temp;
+    lcd.setCursor(0,1);
+    lcd.print(Input);
+    Setpoint = (Preheat-24)*time/(RampTime-time1)+24;
+    lcd.setCursor(8,0);
+    lcd.print(Setpoint);
+    myPID.Compute();
+  
+    lcd.setCursor(0,0);
+    lcd.print(Output);
+  
+  
+  unsigned long now = millis();
+  if (now-windowStartTime>windowSize)
+  {
+    windowStartTime += windowSize;
+  }
+  if (Output>now-windowStartTime)
+  {
+    digitalWrite(ledPin, HIGH);
+    lcd.setCursor(12,1);
+    lcd.print("on");
+    Serial.print(time);
+    Serial.print("\t");
+ 
+   }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+    lcd.setCursor(12,1);
+    lcd.print("off");
+    Serial.print(time);
+    Serial.print("\t");
+  }
+  
+  time += (millis()-time1);
+  }
+  digitalWrite(ledPin, LOW);
+  lcd.setCursor(12,1);
+  lcd.print("off");
+ 
+}
