@@ -40,7 +40,7 @@ void setup()
 void loop()
 {
   // Ramp to Soak
-  RampTime = 75000;
+  RampTime = 75000; //User input of time
   //lcd.setCursor(6,0);
   //lcd.print("RampSoak");
   time1 = millis();
@@ -48,12 +48,12 @@ void loop()
   while (time < RampTime)
   {
     current_val=analogRead(x);
-    current_v = current_val*5.0*1000/1024;
-    current_temp = current_v/5;
+    current_v = current_val*5.0*1000/1024; //convert to voltage
+    current_temp = current_v/5; //convert to temperature
     Input = current_temp;
     lcd.setCursor(0,1);
     lcd.print(Input);
-    Setpoint = (Preheat-24)*time/(RampTime-time1)+24;
+    Setpoint = (Preheat-24)*time/(RampTime-time1)+24; //Setpoint that changes with time
     lcd.setCursor(8,0);
     lcd.print(Setpoint);
     myPID.Compute();
