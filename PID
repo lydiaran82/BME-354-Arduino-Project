@@ -1,0 +1,57 @@
+#include <PID_AutoTune_v0.h>
+
+#include <PID_v1.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+int ledPin = 2;
+int x = 1;
+int current_val = 0;
+float current_v = 0;
+float current_temp = 0;
+int windowSize=5000;
+unsigned long windowStartTime;
+
+//Define variables
+double Setpoint, Input, Output;
+
+
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint, 2, 0.1, 5, DIRECT);
+
+void setup()
+{
+  pinMode(ledPin, OUTPUT);
+  pinMode(x, INPUT);
+  lcd.begin(16,2);
+  windowStartTime=millis();
+  Setpoint = 200;
+ // myPID.SetOutputLimits(0,100);
+  current_v = (current_val*(5.0/1024))*1000; // converts arbitrary units to mV
+  current_temp = current_v/5; // converts voltage (mV) to temperature (5mV in 1 deg. C)
+  myPID.SetMode(AUTOMATIC);
+}
+
+void loop()
+{
+  Input = analogRead(x);
+  lcd.setCursor(0,1);
+  lcd.print(Input);
+  myPID.Compute();
+  lcd.setCursor(0,0);
+  lcd.print(Output);
+  delay(2000);
+  
+//  unsigned long now = millis();
+//  if (now-windowStartTime>windowSize)
+//  {
+//    windowStartTime += windowSize;
+//  }
+//  if (Output > now - windowStartTime)
+//  {
+//    digitalWrite(ledPin, HIGH);
+//  }
+//    else 
+//    {
+//    digitalWrite(ledPin,LOW);
+//    }
+}
