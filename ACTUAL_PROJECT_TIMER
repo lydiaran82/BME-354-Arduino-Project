@@ -1,0 +1,43 @@
+void Timer()
+{
+if (hold < 0)
+    {
+      CurrentMinutes = 0;
+      CurrentSeconds = CurrentTime/1000;
+    }
+    else
+    {
+      CurrentMinutes = (CurrentTime - hold)/60000;
+      CurrentSeconds = hold/1000;
+    }
+
+    if ((CurrentTime/60000) < 10) // while time is less than 10 minutes
+    {
+      lcd.setCursor(2,0); 
+      lcd.print(" ");
+      lcd.setCursor(3,0);
+      lcd.print(CurrentMinutes);
+    }
+    else
+    {
+      lcd.setCursor(2,0);
+      lcd.print(CurrentMinutes);
+    } 
+    lcd.setCursor(4,0);
+    lcd.print(":"); 
+
+    if (CurrentSeconds < 10) // while time is less than 10 minutes
+    {
+      lcd.setCursor(5,0); 
+      lcd.print("0");
+      lcd.setCursor(6,0);
+      lcd.print(CurrentSeconds);
+    }
+    else
+    {
+      lcd.setCursor(5,0);
+      lcd.print(CurrentSeconds);
+    }
+
+    TimeZero = millis();
+}
