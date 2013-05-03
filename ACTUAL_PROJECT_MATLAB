@@ -1,0 +1,112 @@
+clear; clc;
+delete(instrfindall); % deletes previous serial connections
+
+s = serial('COM5'); % connects to serial
+set(s, 'BaudRate',9600); % BaudRate can be set as other values as well
+fopen(s); % acquires the lock and sets up the connection
+s.ReadAsyncMode = 'continuous';
+
+% Various variables
+numberOfDatas = 1000;
+
+% these values are preset -- however the values can also be inputted
+% to match the user inputs into the arduino
+%
+% room_temp = input('Room temperature?\n');
+% preheat = input('Preheat/soak temperature?\n');
+% soak_time = input('Ramp to soak time?\n');
+% preheat_time = input('Preheat/soak time?\n');
+% reflow = input('Reflow peak temperature?\n');
+% reflow_time = input('Reflow Time?\n');
+
+room_temp = 20;
+preheat = 150;
+soak_time = 120;
+preheat_time = 100;
+reflow = 220;
+reflow_time = 90;
+
+t_total = soak_time + preheat_time + reflow_time; % sums 
+
+t = linspace(0,t_total,numberOfDatas); % time used to model reflow curve
+
+data = zeros(1, numberOfDatas); % initialization of data matrix (to be filled in for loop)
+i = 1; % initialization of variable (in for loop)
+time = linspace(0,t_total, length(data)); %time used for actual data points in for loop
+
+
+reflow_curve = zeros(1,length(t)); % initializes model reflow curve
+
+% model reflow curve: ramp to soak
+t1 = find(t <= soak_time);
+reflow_curve(t1) = ((preheat - room_temp)/(soak_time)).*t(t1) + room_temp;
+
+% model reflow curve: preheat/soak
+t2 = find((t > soak_time) & (t <=(soak_time + preheat_time)));
+reflow_curve(t2) = preheat;
+
+% model reflow curve: reflow
+t3 = find((t > (soak_time + preheat_time)) &  (t <= t_total));
+yint = reflow - ((reflow - preheat)/reflow_time)*(t_total);
+reflow_curve(t3) =  ((reflow - preheat)/(reflow_time)).*t(t3) + yint;
+
+
+figure(1)
+hold on
+plot(t,reflow_curve); % plots model reflow curve
+title('Incoming Data from External Device');
+xlabel('Time (seconds)');
+ylabel('Temperature (deg. Celsius)');
+ 
+ 
+% Start asynchronous reading
+readasync(s);
+ 
+ 
+for(i=1:1:numberOfDatas)   
+    % Get the data from the serial object
+    data(i) = fscanf(s, '%d');
+   
+    % Plot the data
+    figure(1);
+    plot(time(i), data(i),'*');
+   
+    % Draw and flush
+    drawnow;
+end
+
+percent_error = zeros(size(data)); % initializes percent_error matrix
+
+for k = 1:numberOfDatas
+    percent_error(k) = (data(k) - reflow_curve(k))*100/reflow_curve(k); % calculates percent error for each data point
+end
+
+figure(2)
+plot(time, percent_error); % plots percent error vs. time
+title('Percent Error');
+xlabel('Time (s)');
+ylabel('Percent Error (%)');
+
+% calculation of the r squared value
+ss_err = 0;
+ss_tot = 0;
+
+for j = 1:length(data)
+    ss_err = ss_err + (data(j) - reflow_curve(j))^2;
+    ss_tot = ss_tot + (data(j) - mean(data))^2;
+end
+
+r_square = 1 - ss_err/ss_tot
+
+% indicator for the cool down
+[y, Fs] = wavread('cooldown');
+sound(y,Fs);
+
+pause(3);
+return;
+    
+stopasync(s);
+
+fprintf(1, 'Sorry, youre going to have to close out of Matlab to close the serial port\n');
+ 
+return
