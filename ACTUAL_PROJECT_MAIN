@@ -11,16 +11,20 @@ int adc_key_in = 0;
 long setVal = 0;
 int select = 0;
 
-long SoakTime = 0; // times and temperatures to be defined by the user
+// times and temperatures to be defined by the user
+long RampTime = 0; 
 long Preheat=0;
 unsigned long PreheatTime=0;
-long RampPeak = 0;
 long ReflowPeak = 0;
 unsigned long ReflowTime = 0;
 
-int c=0;
+//Variables that will be used to decide logic statements (while/for loops)
+int c = 0;
+int d = 0;
 unsigned long time = 0;
 unsigned long time1 = 0;
+
+//Variables that will help with temperature reading and heater set
 int currentTemp = 0;
 int x = 5;
 int Last = 0;
@@ -28,24 +32,30 @@ int ledPin = 2;
 int current_val = 0;
 float current_v = 0;
 float current_temp = 0;
+
+//Variables that help with timer
 long CurrentTime = 0;
 long hold = 0;
 int CurrentMinutes = 0;
 int CurrentSeconds = 0;
-int on = 0;
-float PercentError2 = 0;
-float PercentError = 0;
 long TimeZero = 0;
 long TimeElapsed = 0;
+int on = 0;
 
-int windowSize = 500; // the period of the desired output frequency
+//Variables that govern statistics
+float PercentError2 = 0;
+float PercentError = 0;
+
+// Variables will control the PID
+// the period of the desired output frequency
+int windowSize = 500; 
 unsigned long windowStartTime;
-
 double Setpoint, Input, Output;
 
 //Specify the links and initial tuning parameters
-PID myPID(&Input, &Output, &Setpoint, 5, 0, 1, DIRECT);
+PID myPID(&Input, &Output, &Setpoint, 40, 0, 7, DIRECT);
 
+//Button Control
 #define btnRIGHT 0
 #define btnUP 1
 #define btnDOWN 2
@@ -73,24 +83,10 @@ int read_LCD_buttons()
   //return btnNONE; // when all others fail, return this...
 }
 
-void TempPrint() // Function that prints the temperature onto the LCD screen along with degrees Celsius symbol
+void TempPrint() // Function that prints the temperature onto the LCD screen
 {                // Based on Objective 3 and Objective 4
   lcd.setCursor(0,0);
   lcd.print(setVal);
-  //if (setVal < 100)
-  //{
-  //  lcd.setCursor(2,0);
-  //  lcd.print(char(223));
-  //  lcd.setCursor(3,0);
-  //  lcd.print("C");
-  //}
-  //else
-  //{
-  //lcd.setCursor(3,0);
-  //  lcd.print(char(223));
-  //  lcd.setCursor(4,0);
-  //  lcd.print("C");
-  //}
 }
 void Error() //Allows the user to redo entering the times and temperature
 {    
@@ -123,14 +119,13 @@ void TooLow() // Error message when a user input is too low
   Error();
 }
 
-void TempCheck()
+void TempCheck() //User Interrupt when the temperature is way too hot
 {
-  while (Input > 900)
+  while (Input > 250)
   {
-    digitalWrite(ledPin, LOW);
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("COOL DOWN!");
+    lcd.print("SHUT DOWN");
   }
 }
 
@@ -140,7 +135,6 @@ void setup()
   pinMode(x,INPUT);
   lcd.begin(16, 2); // start the library
   Serial.begin(9600); // initializes the serial monitor
-  //windowStartTime = millis();
   myPID.SetOutputLimits(0,windowSize);
   myPID.SetMode(AUTOMATIC);
   time = 0;
@@ -154,18 +148,24 @@ void loop()
     lcd.setCursor(0,0);
     lcd.print("Preheat Temp?"); //Define initial temperature of the preheat phase; temperature that ramp to soak time ends at
     lcd.setCursor(0,1);
+    lcd.print("(");
     lcd.print(char(223)); // prints degree symbol
-    lcd.setCursor(1,1);
-    lcd.print("C");
+    lcd.setCursor(2,1);
+    lcd.print("C)");
+    setVal=150;
     SetValues(); // allows user to input a value
     Preheat = setVal;
-    Serial.println(Preheat);
+    //Serial.print("Preheat temperature");
+    //Serial.print("(");
+    //Serial.print(char(176));
+    //Serial.print("C): ");
+    //Serial.println(setVal);
     //Error if preheat temperature is too high or too low
-    if (Preheat > 170)
+    if (Preheat > 163)
     {
       TooHigh();
     }
-    else if (Preheat<130)
+    else if (Preheat < 127)
     {
       TooLow();
     }
@@ -174,18 +174,20 @@ void loop()
     delay(150);
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("Soak Time?"); //Ramp to soak time
+    lcd.print("Ramp Time?"); //Ramp to soak time
     lcd.setCursor(0,1);
-    lcd.print("Seconds");
+    lcd.print("(seconds)");
+    setVal=120;
     SetValues();
-    SoakTime=1000*setVal;
-    Serial.println(SoakTime);
+    RampTime=1000*setVal;
+    //Serial.println("Soak Time (s):");
+    //Serial.println(setVal);
     //Error if soak time is too high or too low to be logical
-    if (SoakTime > 510000)
+    if (RampTime > 510000)
     {
       TooHigh();
     }
-    else if (SoakTime < 100000)
+    else if (RampTime < 100000)
     {
       TooLow();
     }
@@ -196,10 +198,12 @@ void loop()
     lcd.setCursor(0,0);
     lcd.print("Preheat Time?"); //Length of time that it preheats (i.e. amount of time preheat temp is constant)
     lcd.setCursor(0,1);
-    lcd.print("Seconds");
+    lcd.print("(seconds)");
+    setVal=100;
     SetValues();
     PreheatTime=1000*setVal;
-    Serial.println(PreheatTime);
+    //Serial.println("Preheat Time (s):");
+    //Serial.println(setVal);
     //Error if the user inputs a time too long or too low
     if (PreheatTime > 120000)
     {
@@ -216,12 +220,18 @@ void loop()
     lcd.setCursor(0,0);
     lcd.print("Reflow Peak?"); //Maximum temperature Reflow curve reaches
     lcd.setCursor(0,1);
+    lcd.print("(");
     lcd.print(char(223));
-    lcd.setCursor(1,1);
-    lcd.print("C");
+    lcd.setCursor(2,1);
+    lcd.print("C)");
+    setVal=220;
     SetValues();
     ReflowPeak=setVal;
-    Serial.println(ReflowPeak);
+    //Serial.println("Reflow peak temperature");
+    //Serial.print("(");
+    //Serial.print(char(176));
+    //Serial.print("C): ");
+    //Serial.println(setVal);
     //Error if user inputs a peak temperature that is too high
     if (ReflowPeak > 245)
     {
@@ -238,10 +248,12 @@ void loop()
     lcd.setCursor(0,0);
     lcd.print("Reflow Time?"); //the time required to ramp the temperature to the reflow peak
     lcd.setCursor(0,1);
-    lcd.print("Seconds");
+    lcd.print("(seconds)");
+    setVal=90;
     SetValues();
     ReflowTime = 1000*setVal; //converts the "ReflowTime" to milliseconds
-    Serial.println(ReflowTime);
+    //Serial.println("Ramp to reflow time (s):");
+    //Serial.println(setVal);
     //Error if the user inputs a a reflow time that is too long or too low
     if (ReflowTime > 90000)
     {
@@ -254,7 +266,8 @@ void loop()
     delay(150);
     lcd.clear();
 
-    //Ramp to Soak Stage
+
+    // **Ramp to Soak Stage**
     lcd.setCursor(0,0);
     lcd.print("RS");
     time1 = millis(); // Calculating the time prior to entering the loop
@@ -262,12 +275,15 @@ void loop()
     TimeElapsed = 0; // required for calculating how much time has elapsed in the loop
     windowStartTime = millis();
     
-    while (time < SoakTime)
+    //Ramp to Soak time
+    //This stage controls the temperature's movement to the preheat temperature
+    
+    while (time < RampTime)
     {
-      CurrentTime = SoakTime - TimeElapsed; // TimeElapsed gets updated at the end of the while loop
+      CurrentTime = RampTime - TimeElapsed; // TimeElapsed gets updated at the end of the while loop
       hold = CurrentTime % 60000;
       Timer(); // displays the time left in the "ramp to soak" stage of the reflow cycle 
-      //CurrentTime = SoakTime - TimeZero; 
+      //CurrentTime = RampTime - TimeZero; 
       
       current_val = analogRead(x); // converts arduino units to voltage to temperature in degrees celsius
       current_v = current_val*5.0*1000/1024;
@@ -277,7 +293,8 @@ void loop()
       lcd.setCursor(8,1); // displays the "actual" temperature as measured by the Arduino
       lcd.print("A:");
       lcd.setCursor(10,1);
-      lcd.print(Input); 
+      lcd.print(Input);
+      Serial.println(Input); 
       
       Setpoint = Preheat;
       lcd.setCursor(8,0); // displays the "desired" setpoint temperature during this stage. For the "Ramp to Soak" stage, the desired temperature is the temp defined by "Preheat"
@@ -286,13 +303,14 @@ void loop()
       lcd.print(Setpoint);
       
       myPID.Compute(); // PID system calculates the output which dictates when the heater will turn on/off
-      Serial.println(Output);
+      //Serial.println(Output);
       
       PercentError = (Input - Setpoint)*100/Setpoint; // calculation of percent error (in order to compare the actual and desired temperatures)
       PercentError2 = abs(PercentError); // absolute value of percent error found to take negative values into account
       
       lcd.setCursor(0,1); // displays the percent error on the LCD screen
       lcd.print(PercentError2);
+      lcd.setCursor(6,1);
       lcd.print("%");
       //delay(150);
 
@@ -306,12 +324,12 @@ void loop()
       if (Output > now - windowStartTime) // the PID output dictates that the relay should become more aggressive
       {
         digitalWrite(ledPin, HIGH); // the heater turns on 
-        Serial.println("on");
+        //Serial.println("on");
       }
       else
       {
         digitalWrite(ledPin, LOW); // the heater turns off
-        Serial.println("off");
+        //Serial.println("off");
       }
       
       TempCheck(); // checks to see if the temperature is too high -- if too high, the heater is shut off, and the message "cool down" is displayed
@@ -322,6 +340,7 @@ void loop()
 
 
     // Preheat stage
+    // This stage maintains the preheat temperature
     // A similar process as described above (same variables used) to control the temperature as desired
     
     lcd.setCursor(0,0);
@@ -348,6 +367,7 @@ void loop()
       lcd.print("A:");
       lcd.setCursor(10,1);
       lcd.print(Input);
+      Serial.println(Input);
       
       Setpoint = Preheat;
       lcd.setCursor(8,0);
@@ -356,13 +376,15 @@ void loop()
       lcd.print(Setpoint);
       
       myPID.Compute();
-      Serial.println(Output);
+      //Serial.println(Output);
       
+      //PercentError = (Input - Setpoint)*100/Setpoint;
       PercentError = (Input - Setpoint)*100/Setpoint;
       PercentError2 = abs(PercentError);
       
       lcd.setCursor(0,1);
       lcd.print(PercentError2);
+      lcd.setCursor(6,1);
       lcd.print("%");
 
 
@@ -376,7 +398,7 @@ void loop()
         digitalWrite(ledPin, HIGH);
         //lcd.setCursor(12,1);
         //lcd.print("on");
-        Serial.println("on");
+        //Serial.println("on");
 
       }
       else
@@ -384,7 +406,7 @@ void loop()
         digitalWrite(ledPin, LOW);
         //lcd.setCursor(12,1);
         //lcd.print("off");
-        Serial.println("off");
+        //Serial.println("off");
       }
       
       TempCheck();
@@ -394,6 +416,7 @@ void loop()
     }
 
     // Reflow Time
+    // This stage ramps up to the reflow temperature 
     // A similar process as described above (same variables used) to control the temperature as desired
     
     lcd.setCursor(0,0);
@@ -420,21 +443,22 @@ void loop()
       lcd.print("A:");
       lcd.setCursor(10,1);
       lcd.print(Input);
+      Serial.println(Input);
       
       Setpoint = ReflowPeak;
       lcd.setCursor(8,0);
       lcd.print("D:");
       lcd.setCursor(10,0);
       lcd.print(Setpoint);
-      //delay(150);
+      
       myPID.Compute();
-
-      Serial.println(Output);
+      //Serial.println(Output);
       PercentError = (Input - Setpoint)*100/Setpoint;
       PercentError2 = abs(PercentError);
       
       lcd.setCursor(0,1);
       lcd.print(PercentError2);
+      lcd.setCursor(6,1);
       lcd.print("%");
 
 
@@ -449,7 +473,7 @@ void loop()
         digitalWrite(ledPin, HIGH);
         //lcd.setCursor(12,1);
         //lcd.print("on");
-        Serial.println(time);
+        //Serial.println(time);
 
       }
       else
@@ -457,19 +481,38 @@ void loop()
         digitalWrite(ledPin, LOW);
         //lcd.setCursor(12,1);
         //lcd.print("off");
-        Serial.println(time);
+        //Serial.println(time);
       }
       
       TempCheck();
       delay(300);
       time = millis() - time1;
-      TimeElapsed = TimeElapsed + (millis() - TimeZero);
+      TimeElapsed = TimeElapsed + (millis() - TimeZero); //Adds to timer
     }
     
+    // Cooling rate: can't be controlled due to lack of control on the fan
     digitalWrite(ledPin, LOW);
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("COOL DOWN!");
+    
+    // Displays cooling rate
+    while (Input>25)
+    {
+    current_val=analogRead(x);
+    current_v = current_val*5.0*1000/1024;
+    current_temp = current_v/5;
+    Input = current_temp;
+      
+    lcd.setCursor(8,1);
+    lcd.print("T:");
+    lcd.setCursor(10,1);
+    lcd.print(Input);
+    Serial.println(Input);
+    }
+    
     c = 1;
   }
 }
+
+
